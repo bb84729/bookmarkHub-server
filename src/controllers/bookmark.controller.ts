@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from 'express'
 import { Bookmark } from '../models'
+import { AuthRequest } from '../middleware/auth.middleware'
 
 // 取得所有書籤
-export const getAll = async (req: Request, res: Response, next: NextFunction) => {
+export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const bookmarks = await Bookmark.find()
+    const bookmarks = await Bookmark.find({ user: req.userId })
     res.json(bookmarks)
   } catch (error) {
     next(error)
@@ -12,9 +13,12 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 // 取得單一書籤
-export const getOne = async (req: Request, res: Response, next: NextFunction) => {
+export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const bookmark = await Bookmark.findById(req.params.id)
+    const bookmark = await Bookmark.findOne({
+      _id: req.params.id,
+      user: req.userId
+    })
 
     if (!bookmark) {
       return res.status(404).json({ error: 'Bookmark not found' })
@@ -27,7 +31,7 @@ export const getOne = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 // 新增書籤
-export const create = async (req: Request, res: Response, next: NextFunction) => {
+export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const bookmark = await Bookmark.create({
       title: req.body.title,
@@ -35,7 +39,7 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
       description: req.body.description,
       tags: req.body.tags || [],
       folder: req.body.folder,
-      user: req.body.user // 之後會從 JWT 取得
+      user: req.userId // 從 token 取得，不是前端傳的
     })
 
     res.status(201).json(bookmark)
@@ -45,7 +49,7 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 // 更新書籤
-export const update = async (req: Request, res: Response, next: NextFunction) => {
+export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const allowedFields = ['title', 'url', 'description', 'tags', 'folder']
     const receivedFields = Object.keys(req.body)
@@ -57,7 +61,10 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const bookmark = await Bookmark.findByIdAndUpdate(
-      req.params.id,
+      {
+        _id: req.params.id,
+        user: req.userId // 確保只能更新自己的
+      },
       {
         title: req.body.title,
         url: req.body.url,
@@ -78,9 +85,12 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
   }
 }
 // 刪除書籤
-export const remove = async (req: Request, res: Response, next: NextFunction) => {
+export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const bookmark = await Bookmark.findByIdAndDelete(req.params.id)
+    const bookmark = await Bookmark.findOneAndDelete({
+      _id: req.params.id,
+      user: req.userId // 確保只能刪除自己的
+    })
 
     if (!bookmark) {
       return res.status(404).json({ error: 'Bookmark not found' })

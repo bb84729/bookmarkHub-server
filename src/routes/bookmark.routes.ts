@@ -1,7 +1,10 @@
 import { Router } from 'express'
 import * as bookmarkController from '../controllers/bookmark.controller'
+import { authenticate } from '../middleware/auth.middleware'
 
 const router = Router()
+// 所有 bookmark 路由都需要登入
+router.use(authenticate)
 
 // GET    /api/bookmarks     - 取得所有書籤
 router.get('/', bookmarkController.getAll)
