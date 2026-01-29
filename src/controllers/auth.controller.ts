@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import { User } from '../models'
 import { AuthRequest } from '../middleware/auth.middleware'
+import { AppError } from '../utils/AppError'
 
 // 註冊
 export const register = async (req: Request, res: Response, next: NextFunction) => {
@@ -11,7 +12,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     // 檢查 email 是否已存在
     const existingUser = await User.findOne({ email })
     if (existingUser) {
-      return res.status(400).json({ error: 'Email already exists' })
+      throw new AppError('Email already exists', 400)
     }
 
     // 建立使用者（密碼會在 Model 自動加密）
@@ -44,13 +45,13 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     // 查詢使用者
     const user = await User.findOne({ email })
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' })
+      throw new AppError('Invalid email or password', 401)
     }
 
     // 比對密碼
     const isMatch = await user.comparePassword(password)
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' })
+      throw new AppError('Invalid email or password', 401)
     }
 
     // 產生 JWT
@@ -78,7 +79,7 @@ export const getMe = async (req: AuthRequest, res: Response, next: NextFunction)
     const user = await User.findById(req.userId).select('-password')
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' })
+      throw new AppError('User not found', 404)
     }
 
     res.json(user)

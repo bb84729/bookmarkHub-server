@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express'
 import { Bookmark } from '../models'
 import { AuthRequest } from '../middleware/auth.middleware'
+import { AppError } from '../utils/AppError'
 
 // 取得所有書籤
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -21,7 +22,7 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
     })
 
     if (!bookmark) {
-      return res.status(404).json({ error: 'Bookmark not found' })
+      throw new AppError('Bookmark not found', 404)
     }
 
     res.json(bookmark)
@@ -57,10 +58,10 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
     // 檢查是否有不允許的欄位
     const invalidFields = receivedFields.filter((field) => !allowedFields.includes(field))
     if (invalidFields.length > 0) {
-      return res.status(400).json({ error: `Invalid fields: ${invalidFields.join(', ')}` })
+      throw new AppError(`Invalid fields: ${invalidFields.join(', ')}`, 400)
     }
 
-    const bookmark = await Bookmark.findByIdAndUpdate(
+    const bookmark = await Bookmark.findOneAndUpdate(
       {
         _id: req.params.id,
         user: req.userId // 確保只能更新自己的
@@ -76,7 +77,7 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
     )
 
     if (!bookmark) {
-      return res.status(404).json({ error: 'Bookmark not found' })
+      throw new AppError('Bookmark not found', 404)
     }
 
     res.json(bookmark)
@@ -93,7 +94,7 @@ export const remove = async (req: AuthRequest, res: Response, next: NextFunction
     })
 
     if (!bookmark) {
-      return res.status(404).json({ error: 'Bookmark not found' })
+      throw new AppError('Bookmark not found', 404)
     }
 
     res.json({ message: 'Bookmark deleted successfully' })
