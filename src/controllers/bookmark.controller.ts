@@ -4,9 +4,37 @@ import { AuthRequest } from '../middleware/auth.middleware'
 import { AppError } from '../utils/AppError'
 
 // 取得所有書籤
+// 支援搜尋
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const bookmarks = await Bookmark.find({ user: req.userId })
+    const { search, tag } = req.query
+
+    //基本查詢條件：只查自己的
+    const query: any = { user: req.userId }
+
+    //如果有搜尋關鍵字，搜尋標題和描述 //$regex 是 MongoDB 的模糊搜尋,$or 是「或」的條件，符合其中一個就會被找到
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ]
+    }
+
+    // 如果有標籤篩選
+    if (tag) {
+      query.tags = tag
+    }
+
+    // 3. 最後 query 變成這樣
+    // {
+    //   user: "你的ID",
+    //   $or: [
+    //     { title: { $regex: "google", $options: "i" } },
+    //     { description: { $regex: "google", $options: "i" } }
+    //   ]
+    // }
+
+    const bookmarks = await Bookmark.find(query)
     res.json(bookmarks)
   } catch (error) {
     next(error)
