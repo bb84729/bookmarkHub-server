@@ -1,20 +1,24 @@
 import { Request, Response, NextFunction } from 'express'
 import { Folder } from '../models'
+import { AuthRequest } from '../middleware/auth.middleware'
 
-// 取得所有資料夾
-export const getAll = async (req: Request, res: Response, next: NextFunction) => {
+// 取得所有資料夾（只取得自己的）
+export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const folders = await Folder.find()
+    const folders = await Folder.find({ user: req.userId })
     res.json(folders)
   } catch (error) {
     next(error)
   }
 }
 
-// 取得單一資料夾
-export const getOne = async (req: Request, res: Response, next: NextFunction) => {
+// 取得單一資料夾（只取得自己的）
+export const getOne = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const folder = await Folder.findById(req.params.id)
+    const folder = await Folder.findOne({
+      _id: req.params.id,
+      user: req.userId
+    })
 
     if (!folder) {
       return res.status(404).json({ error: 'Folder not found' })
@@ -27,11 +31,11 @@ export const getOne = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 // 新增資料夾
-export const create = async (req: Request, res: Response, next: NextFunction) => {
+export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const folder = await Folder.create({
       name: req.body.name,
-      user: req.body.user
+      user: req.userId
     })
 
     res.status(201).json(folder)
@@ -41,10 +45,13 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 // 更新資料夾
-export const update = async (req: Request, res: Response, next: NextFunction) => {
+export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const folder = await Folder.findByIdAndUpdate(
-      req.params.id,
+    const folder = await Folder.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        user: req.userId
+      },
       {
         name: req.body.name
       },
@@ -62,9 +69,12 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
 }
 
 // 刪除資料夾
-export const remove = async (req: Request, res: Response, next: NextFunction) => {
+export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const folder = await Folder.findByIdAndDelete(req.params.id)
+    const folder = await Folder.findOneAndDelete({
+      _id: req.params.id,
+      user: req.userId
+    })
 
     if (!folder) {
       return res.status(404).json({ error: 'Folder not found' })
