@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from 'express'
+import { Response, NextFunction } from 'express'
 import { Folder } from '../models'
 import { AuthRequest } from '../middleware/auth.middleware'
+import { AppError } from '../utils/AppError'
 
 // 取得所有資料夾（只取得自己的）
 export const getAll = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -21,7 +22,7 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
     })
 
     if (!folder) {
-      return res.status(404).json({ error: 'Folder not found' })
+      throw new AppError('Folder not found', 404)
     }
 
     res.json(folder)
@@ -59,7 +60,7 @@ export const update = async (req: AuthRequest, res: Response, next: NextFunction
     )
 
     if (!folder) {
-      return res.status(404).json({ error: 'Folder not found' })
+      throw new AppError('Folder not found', 404)
     }
 
     res.json(folder)
@@ -77,7 +78,7 @@ export const remove = async (req: AuthRequest, res: Response, next: NextFunction
     })
 
     if (!folder) {
-      return res.status(404).json({ error: 'Folder not found' })
+      throw new AppError('Folder not found', 404)
     }
 
     res.json({ message: 'Folder deleted successfully' })
