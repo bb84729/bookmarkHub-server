@@ -17,6 +17,9 @@ router.get('/:id', bookmarkController.getOne)
 // POST   /api/bookmarks     - 新增書籤
 router.post('/', bookmarkValidator, validate, bookmarkController.create)
 
+// PUT /api/bookmarks/reorder - 批次更新排序（放在 /:id 之前）
+router.put('/reorder', bookmarkController.updateOrder)
+
 // PUT    /api/bookmarks/:id - 更新書籤
 router.put('/:id', bookmarkValidator, validate, bookmarkController.update)
 

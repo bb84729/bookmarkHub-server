@@ -34,7 +34,7 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
     //   ]
     // }
 
-    const bookmarks = await Bookmark.find(query)
+    const bookmarks = await Bookmark.find(query).sort({ order: 1 })
     res.json(bookmarks)
   } catch (error) {
     next(error)
@@ -126,6 +126,24 @@ export const remove = async (req: AuthRequest, res: Response, next: NextFunction
     }
 
     res.json({ message: 'Bookmark deleted successfully' })
+  } catch (error) {
+    next(error)
+  }
+}
+
+// 批次更新書籤排序
+// 這就是「一次 API 呼叫，同時更新所有書籤的順序」，只是因為 MongoDB 沒有「一次更新多筆不同文件的不同值」的語法，所以用 Promise.all 來達成同樣效果。
+export const updateOrder = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { items } = req.body // items: [{ id: '...', order: 0 }, { id: '...', order: 1 }, ...]
+
+    const updates = items.map((item: { id: string; order: number }) =>
+      Bookmark.findOneAndUpdate({ _id: item.id, user: req.userId }, { order: item.order })
+    )
+
+    await Promise.all(updates)
+
+    res.json({ message: 'Order updated successfully' })
   } catch (error) {
     next(error)
   }
