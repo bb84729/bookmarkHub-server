@@ -12,6 +12,10 @@ router.post('/register', registerValidator, validate, authController.register)
 // POST /api/auth/login - 登入
 router.post('/login', loginValidator, validate, authController.login)
 
+router.post('/refresh', authController.refresh)
+
+router.post('/logout', authenticate, authController.logout)
+
 // GET /api/auth/me - 取得當前使用者（需要登入）
 router.get('/me', authenticate, authController.getMe)
 

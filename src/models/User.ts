@@ -6,6 +6,7 @@ export interface IUser extends Document {
   password: string
   name: string
   createdAt: Date
+  refreshToken?: string
   comparePassword(candidatePassword: string): Promise<boolean>
 }
 
@@ -30,6 +31,10 @@ const UserSchema: Schema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  refreshToken: {
+    type: String,
+    default: null
   }
 })
 
