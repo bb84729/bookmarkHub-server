@@ -1,0 +1,37 @@
+services:
+  # ---- MongoDB 容器 ----
+  mongodb:
+    image: mongo:7 # 直接用官方 image，不需要自己寫 Dockerfile
+    container_name: bookmarkhub-mongodb
+    restart: unless-stopped # 掛掉自動重啟，除非你手動停止
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: bookmarkhub
+    ports:
+      - '27017:27017' # 讓你本地也可以用 MongoDB Compass 連進來看資料
+    volumes:
+      - mongodb_data:/data/db # 資料持久化，容器重啟後資料不會消失
+
+  # ---- Node.js Server 容器 ----
+  server:
+    build:
+      context: . # Dockerfile 在哪裡（當前目錄）
+      target: production # 用 multi-stage 的 production stage
+    container_name: bookmarkhub-server
+    restart: unless-stopped
+    ports:
+      - '3000:3000' # 本地 3000 → 容器 3000
+    environment:
+      PORT: 3000
+      # 注意：這裡的 host 是 "mongodb"（容器名稱），不是 localhost！
+      # Docker network 讓容器可以用服務名稱互相找到對方
+      MONGODB_URI: mongodb://root:password123@mongodb:27017/bookmarkhub?authSource=admin
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      JWT_EXPIRES_IN: 7d
+    depends_on:
+      - mongodb # 確保 mongodb 容器先啟動，server 才啟動
+
+# 宣告 named volume，讓 Docker 管理資料儲存位置
+volumes:
+  mongodb_data:
