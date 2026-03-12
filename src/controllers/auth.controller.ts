@@ -3,6 +3,13 @@ import jwt from 'jsonwebtoken'
 import { User } from '../models'
 import { AuthRequest } from '../middleware/auth.middleware'
 import { AppError } from '../utils/AppError'
+import redis from '../config/redis'
+
+// Redis key 的格式：refreshToken:userId
+const getRedisKey = (userId: string) => `refreshToken:${userId}`
+
+// token 過期時間（秒）
+const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60 // 7天
 
 const generateAccessToken = (userId: string) => {
   return jwt.sign(
@@ -74,8 +81,11 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const refreshToken = generateRefreshToken(user._id.toString())
 
     // 把refreshToken存進資料庫
-    user.refreshToken = refreshToken
-    await user.save()
+    // user.refreshToken = refreshToken
+    // await user.save()
+
+    // 存進 Redis，7天後自動過期（不再存 MongoDB）
+    await redis.set(getRedisKey(user._id.toString()), refreshToken, 'EX', REFRESH_TOKEN_TTL)
 
     res.json({
       accessToken,
@@ -103,12 +113,18 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
       userId: string
     }
 
-    const user = await User.findById(decoded.userId)
-    if (!user || user.refreshToken !== refreshToken) {
+    // const user = await User.findById(decoded.userId)
+    // if (!user || user.refreshToken !== refreshToken) {
+    //   throw new AppError('Invalid refresh token', 401)
+    // }
+
+    // 從 Redis 取出 token，比對是否一致
+    const storedToken = await redis.get(getRedisKey(decoded.userId))
+    if (!storedToken || storedToken !== refreshToken) {
       throw new AppError('Invalid refresh token', 401)
     }
 
-    const accessToken = generateAccessToken(user._id.toString())
+    const accessToken = generateAccessToken(decoded.userId)
 
     res.json({ accessToken })
   } catch (error) {
@@ -121,7 +137,10 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
 
 export const logout = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    await User.findByIdAndUpdate(req.userId, { refreshToken: null })
+    // 直接刪掉 Redis 的 key
+    await redis.del(getRedisKey(req.userId as string))
+    //原本是刪掉資料庫的refeshtoken
+    //await User.findByIdAndUpdate(req.userId, { refreshToken: null })
     res.json({ message: 'Logged out successfully' })
   } catch (error) {
     next(error)

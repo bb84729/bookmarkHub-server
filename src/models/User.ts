@@ -31,10 +31,6 @@ const UserSchema: Schema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  },
-  refreshToken: {
-    type: String,
-    default: null
   }
 })
 
