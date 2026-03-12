@@ -22,13 +22,8 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000' # 本地 3000 → 容器 3000
-    environment:
-      PORT: 3000
-      # 注意：這裡的 host 是 "mongodb"（容器名稱），不是 localhost！
-      # Docker network 讓容器可以用服務名稱互相找到對方
-      MONGODB_URI: mongodb://root:password123@mongodb:27017/bookmarkhub?authSource=admin
-      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
-      JWT_EXPIRES_IN: 7d
+    env_file:
+      - .env.docker # 環境變數從外部檔案讀取，不寫死在 compose 裡
     depends_on:
       - mongodb # 確保 mongodb 容器先啟動，server 才啟動
 
