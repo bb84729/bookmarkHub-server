@@ -13,6 +13,16 @@ services:
     volumes:
       - mongodb_data:/data/db # 資料持久化，容器重啟後資料不會消失
 
+  # ---- Redis 容器 ----
+  redis:
+    image: redis:7-alpine
+    container_name: bookmarkhub-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379' # 讓你本地也可以用 Redis client 連進來
+    volumes:
+      - redis_data:/data # 資料持久化
+
   # ---- Node.js Server 容器 ----
   server:
     build:
@@ -26,7 +36,9 @@ services:
       - .env.docker # 環境變數從外部檔案讀取，不寫死在 compose 裡
     depends_on:
       - mongodb # 確保 mongodb 容器先啟動，server 才啟動
+      - redis # 確保 redis 容器先啟動，server 才啟動
 
 # 宣告 named volume，讓 Docker 管理資料儲存位置
 volumes:
   mongodb_data:
+  redis_data:

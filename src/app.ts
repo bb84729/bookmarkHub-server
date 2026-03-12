@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import routes from './routes'
 import { AppError } from './utils/AppError'
+import { apiLimiter } from './middleware/rateLimit.middleware'
 
 const app: Application = express()
 
@@ -16,6 +17,7 @@ app.get('/', (req: Request, res: Response) => {
 })
 
 // API 路由
+app.use('/api', apiLimiter)
 app.use('/api', routes)
 
 // 404 處理 找不到該路由

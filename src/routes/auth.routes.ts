@@ -3,6 +3,7 @@ import * as authController from '../controllers/auth.controller'
 import { authenticate } from '../middleware/auth.middleware'
 import { validate } from '../middleware/validate.middleware'
 import { registerValidator, loginValidator } from '../validators/auth.validator'
+import { loginLimiter } from '../middleware/rateLimit.middleware'
 
 const router = Router()
 
@@ -10,7 +11,7 @@ const router = Router()
 router.post('/register', registerValidator, validate, authController.register)
 
 // POST /api/auth/login - 登入
-router.post('/login', loginValidator, validate, authController.login)
+router.post('/login', loginLimiter, loginValidator, validate, authController.login)
 
 router.post('/refresh', authController.refresh)
 
