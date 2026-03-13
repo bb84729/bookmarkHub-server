@@ -38,6 +38,19 @@ services:
       - mongodb # 確保 mongodb 容器先啟動，server 才啟動
       - redis # 確保 redis 容器先啟動，server 才啟動
 
+  # ---- Nginx 容器 ----
+  nginx:
+    image: nginx
+    container_name: bookmarkhub-nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /root/bookmarkHub-client/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - server
+
 # 宣告 named volume，讓 Docker 管理資料儲存位置
 volumes:
   mongodb_data:

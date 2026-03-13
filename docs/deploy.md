@@ -89,9 +89,48 @@ docker compose up -d --build
 - `docker-compose.yml` 用 `env_file: .env.docker` 讀取
 - `.env` 和 `.env.*` 都已加入 `.gitignore` 和 `.dockerignore`
 
+## 防火牆（UFW）
+
+```bash
+ufw allow 22        # SSH
+ufw allow 3000      # API
+ufw enable
+```
+
+MongoDB 27017 不要對外開放，用 SSH tunnel 連。
+
+## 用 Compass 查看 VPS 資料庫（SSH Tunnel）
+
+在本機執行（不是 VPS）：
+
+```bash
+ssh -L 27018:localhost:27017 root@139.162.101.11
+```
+
+原理：本機 `localhost:27018` → 透過 SSH 加密通道 → VPS 的 `localhost:27017`（MongoDB）
+
+然後 Compass 連線用：
+
+```
+mongodb://root:password123@localhost:27018/bookmarkhub?authSource=admin
+```
+
+注意：執行 tunnel 的終端機視窗不能關，關了 tunnel 就斷了。
+
+## 更新環境變數
+
+直接在 VPS 上改，不需要 `--build`：
+
+```bash
+nano /root/bookmarkHub-server/.env.docker
+docker compose up -d
+```
+
 ## 備註
 
 - `restart: unless-stopped` — 容器 crash 會自動重啟
 - `-d` 代表 detach，背景執行
 - Node.js 20.6+ 內建 `--env-file`，不需要 dotenv 套件
 - API 位址：`http://139.162.101.11:3000`
+- Linode 按小時計費，$5/月是上限，不用到一個月按比例算
+- 單純關機（Power Off）還是會收費，要完全停止計費需 Delete 機器
