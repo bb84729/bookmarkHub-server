@@ -6,6 +6,8 @@ import { apiLimiter } from './middleware/rateLimit.middleware'
 
 const app: Application = express()
 
+app.set('trust proxy', 1) // 信任第一層代理（Nginx），讓 req.ip 取得使用者真實 IP
+
 //middleware
 app.use(cors())
 app.use(express.json())
