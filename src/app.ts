@@ -3,6 +3,8 @@ import cors from 'cors'
 import routes from './routes'
 import { AppError } from './utils/AppError'
 import { apiLimiter } from './middleware/rateLimit.middleware'
+import swaggerUi from 'swagger-ui-express'
+import { swaggerSpec } from './config/swagger'
 
 const app: Application = express()
 
@@ -17,6 +19,17 @@ app.use(express.urlencoded({ extended: true }))
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'BookmarkHub API is running!' })
 })
+
+// Swagger 文件
+app.use(
+  '/swagger',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    swaggerOptions: {
+      persistAuthorization: true // 把 token 存進 localStorage
+    }
+  })
+)
 
 // API 路由
 app.use('/api', apiLimiter)

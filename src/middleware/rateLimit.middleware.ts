@@ -8,6 +8,7 @@ export const loginLimiter = rateLimit({
   message: { error: 'Too many login attempts, please try again after 15 minutes' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   store: new RedisStore({
     sendCommand: (command: string, ...args: string[]) =>
       redis.call(command, ...args) as unknown as Promise<any>
@@ -20,6 +21,7 @@ export const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   store: new RedisStore({
     sendCommand: (command: string, ...args: string[]) =>
       redis.call(command, ...args) as unknown as Promise<any>
