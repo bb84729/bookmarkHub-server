@@ -47,7 +47,11 @@ services:
       - '80:80'
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # 把你專案裡的 nginx.conf 掛到容器裡 Nginx 讀設定的位置
+      # :ro = read only，容器只能讀不能改
       - /root/bookmarkHub-client/dist:/usr/share/nginx/html:ro
+      # 把 VPS 上的前端 dist 資料夾掛到容器裡 Nginx serve 靜態檔的位置
+      # 因為是 volume 掛載，更新 dist 後不用 restart
     depends_on:
       - server
 
