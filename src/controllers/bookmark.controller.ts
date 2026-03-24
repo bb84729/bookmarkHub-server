@@ -9,6 +9,11 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
   try {
     const { search, tag } = req.query
 
+    // 取得分頁參數，預設 page=1, limit=10
+    const page = Math.max(1, parseInt(req.query.page as string) || 1)
+    const limit = Math.min(50, parseInt(req.query.limit as string) || 10)
+    const skip = (page - 1) * limit
+
     //基本查詢條件：只查自己的
     const query: any = { user: req.userId }
 
@@ -34,8 +39,25 @@ export const getAll = async (req: AuthRequest, res: Response, next: NextFunction
     //   ]
     // }
 
-    const bookmarks = await Bookmark.find(query).sort({ order: 1 })
-    res.json(bookmarks)
+    // 同時查資料和總筆數
+    const [bookmarks, total] = await Promise.all([
+      Bookmark.find(query).sort({ order: 1, _id: 1 }).skip(skip).limit(limit),
+      Bookmark.countDocuments(query)
+    ])
+
+    const totalPages = Math.ceil(total / limit)
+
+    res.json({
+      data: bookmarks,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    })
   } catch (error) {
     next(error)
   }
