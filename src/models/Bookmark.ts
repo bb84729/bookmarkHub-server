@@ -8,6 +8,7 @@ export interface IBookmark extends Document {
   tags: string[]
   folder?: Types.ObjectId
   user: Types.ObjectId
+  order: number
   createdAt: Date
 }
 

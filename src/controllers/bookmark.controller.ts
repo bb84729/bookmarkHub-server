@@ -84,13 +84,20 @@ export const getOne = async (req: AuthRequest, res: Response, next: NextFunction
 // 新增書籤
 export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    // 找出目前最大的 order，新書籤放在最後
+    const lastBookmark = await Bookmark.findOne({ user: req.userId })
+      .sort({ order: -1 })
+      .select('order')
+
+    const nextOrder = lastBookmark ? lastBookmark.order + 1 : 0
     const bookmark = await Bookmark.create({
       title: req.body.title,
       url: req.body.url,
       description: req.body.description,
       tags: req.body.tags || [],
       folder: req.body.folder,
-      user: req.userId // 從 token 取得，不是前端傳的
+      user: req.userId, // 從 token 取得，不是前端傳的
+      order: nextOrder
     })
 
     res.status(201).json(bookmark)
